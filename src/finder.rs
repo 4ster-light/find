@@ -1,6 +1,6 @@
+use colored::*;
 use std::fs;
 use std::path::{Path, PathBuf};
-use colored::*;
 
 pub fn search_files(dir: &Path, filename: &str, show_dirs: &bool) -> Vec<PathBuf> {
     let mut results = Vec::new();
@@ -23,7 +23,10 @@ pub fn search_files(dir: &Path, filename: &str, show_dirs: &bool) -> Vec<PathBuf
             }
         }
         Err(e) => {
-            eprintln!("{}", format!("Error reading {}: {}", dir.display(), e).red());
+            eprintln!(
+                "{}",
+                format!("Error reading {}: {}", dir.display(), e).red()
+            );
         }
     }
 
