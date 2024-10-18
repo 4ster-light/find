@@ -29,12 +29,11 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let (
-        filename,
-        dir,
-        time,
-        show_dirs
-    ) = (&args.filename, &args.dir, &args.time, &args.show_dirs);
+    
+    let filename = &args.filename;
+    let dir = &args.dir;
+    let time = &args.time;
+    let show_dirs = &args.show_dirs;
 
     let start = Instant::now();
     let results = finder::search_files(&Path::new(dir), filename, show_dirs);
