@@ -12,6 +12,7 @@ import (
 	"github.com/4ster-light/finder/color"
 )
 
+// Traverse the file system and return a list of all files that match the filename
 func SearchFiles(dir string, filename string, showDirs bool) []string {
 	var results []string
 
@@ -46,87 +47,109 @@ func SearchFiles(dir string, filename string, showDirs bool) []string {
 	return results
 }
 
+// Print the results of the search to the terminal.
+// Table format and colors are handled internally
 func PrintResults(results []string) {
 	if len(results) == 0 {
 		return
 	}
 
-	termWidth, _, err := term.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		termWidth = 80 // fallback to reasonable default
-	}
-	if termWidth < 40 {
-		termWidth = 40
-	}
-
-	// Calculate available space for path column
-	// Fixed width: 3 (Nº) + 7 (borders and spaces) = 10
-	const fixedWidth = 10
-	maxPathLength := termWidth - fixedWidth
-
-	topBorder := "┌─────┬" + strings.Repeat("─", maxPathLength) + "┐"
-	middleBorder := "├─────┼" + strings.Repeat("─", maxPathLength) + "┤"
-	bottomBorder := "└─────┴" + strings.Repeat("─", maxPathLength) + "┘"
+	termWidth := getTerminalWidth()
+	maxPathLength := calculateMaxPathLength(termWidth)
 
 	if maxPathLength < 10 {
-		fmt.Printf("\n%s\nTerminal too narrow to display results.\n",
-			color.Colorize("[RESULTS]", color.ColorResults))
+		printTooNarrowMessage()
 		return
 	}
+
+	printTableHeader(maxPathLength)
+
+	for i, path := range results {
+		displayPath := formatPath(path, maxPathLength)
+		printTableRow(i+1, displayPath, maxPathLength)
+	}
+
+	printTableFooter(maxPathLength)
+}
+
+// * HELPER PRIVATE FUNCTIONS
+
+func getTerminalWidth() int {
+	termWidth, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil || termWidth < 40 {
+		return 40 // fallback to reasonable default
+	}
+	return termWidth
+}
+
+func calculateMaxPathLength(termWidth int) int {
+	const fixedWidth = 10 // 3 (Nº) + 7 (borders and spaces)
+	return termWidth - fixedWidth
+}
+
+func printTooNarrowMessage() {
+	fmt.Printf("\n%s\nTerminal too narrow to display results.\n",
+		color.Colorize("[RESULTS]", color.ColorResults))
+}
+
+func printTableHeader(maxPathLength int) {
+	topBorder := "┌─────┬" + strings.Repeat("─", maxPathLength) + "┐"
+	middleBorder := "├─────┼" + strings.Repeat("─", maxPathLength) + "┤"
 
 	fmt.Printf("\n%s\n", color.Colorize("[RESULTS]", color.ColorResults))
 	fmt.Println(topBorder)
 	fmt.Printf("│ %-3s │ %-*s │\n", "Nº", maxPathLength-2, "Path")
 	fmt.Println(middleBorder)
+}
 
-	for i, path := range results {
-		// Strip existing color codes for length calculation
-		strippedPath := color.StripColorCodes(path)
-		displayPath := strippedPath
+func printTableFooter(maxPathLength int) {
+	bottomBorder := "└─────┴" + strings.Repeat("─", maxPathLength) + "┘"
+	fmt.Println(bottomBorder)
+}
 
-		// Truncate path if necessary
-		pathWidth := utf8.RuneCountInString(strippedPath)
-		if pathWidth > maxPathLength-2 {
-			// Try to preserve the last part of the path
-			segments := strings.Split(strippedPath, string(os.PathSeparator))
-			if len(segments) > 1 {
-				lastPart := segments[len(segments)-1]
-				if utf8.RuneCountInString(lastPart) > maxPathLength-5 {
-					// If even the last part is too long, do simple truncation
-					displayPath = truncateString(strippedPath, maxPathLength-5) + "..."
-				} else {
-					// Show ".../" + last part
-					remainingSpace := maxPathLength - 5 - utf8.RuneCountInString(lastPart)
-					if remainingSpace > 0 {
-						prefix := truncateString(strings.Join(segments[:len(segments)-1], string(os.PathSeparator)), remainingSpace)
-						displayPath = prefix + ".../" + lastPart
-					} else {
-						displayPath = ".../" + lastPart
-					}
-				}
-			} else {
-				displayPath = truncateString(strippedPath, maxPathLength-5) + "..."
-			}
-		}
+func formatPath(path string, maxPathLength int) string {
+	strippedPath := color.StripColorCodes(path)
+	pathWidth := utf8.RuneCountInString(strippedPath)
 
-		// Pad the path (subtract 2 from maxPathLength to fix extra space) and apply color
-		paddedPath := fmt.Sprintf("%-*s", maxPathLength-2, displayPath)
-		coloredPath := color.Colorize(paddedPath, color.ColorPath)
-		fmt.Printf("│ %-3d │ %s │\n", i+1, coloredPath)
+	if pathWidth <= maxPathLength-2 {
+		return strippedPath
 	}
 
-	fmt.Println(bottomBorder)
+	return truncatePath(strippedPath, maxPathLength)
+}
+
+func truncatePath(path string, maxPathLength int) string {
+	const ellipsis = "..."
+	segments := strings.Split(path, string(os.PathSeparator))
+
+	if len(segments) <= 1 {
+		return truncateString(path, maxPathLength-len(ellipsis)) + ellipsis
+	}
+
+	lastPart := segments[len(segments)-1]
+	remainingSpace := maxPathLength - len(ellipsis) - utf8.RuneCountInString(lastPart)
+
+	if remainingSpace <= 0 {
+		return ellipsis + string(os.PathSeparator) + lastPart
+	}
+
+	prefix := truncateString(strings.Join(segments[:len(segments)-1], string(os.PathSeparator)), remainingSpace)
+	return prefix + ellipsis + string(os.PathSeparator) + lastPart
+}
+
+func printTableRow(index int, displayPath string, maxPathLength int) {
+	paddedPath := fmt.Sprintf("%-*s", maxPathLength-2, displayPath)
+	coloredPath := color.Colorize(paddedPath, color.ColorPath)
+	fmt.Printf("│ %-3d │ %s │\n", index, coloredPath)
 }
 
 func truncateString(s string, length int) string {
 	if length <= 0 {
 		return ""
 	}
-
 	runes := []rune(s)
 	if len(runes) <= length {
 		return s
 	}
-
 	return string(runes[:length])
 }
