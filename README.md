@@ -1,9 +1,5 @@
 # Find
 
-> [!WARNING]
-> YET TO REWRITE THIS OLD README
->
-
 A fast and efficient command-line tool written in Go for recursively searching files in directories. This tool helps you locate files by name across your filesystem with options to customize the search behavior. It is a custom implementation of the `find` command, tailored for speed and efficiency.
 
 ## Installation
@@ -19,7 +15,9 @@ A fast and efficient command-line tool written in Go for recursively searching f
 ```bash
 git clone https://github.com/4ster-light/find.git
 cd find
+```
 
+```bash
 go build -o find
 ```
 
