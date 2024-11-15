@@ -4,54 +4,40 @@
 > YET TO REWRITE THIS OLD README
 >
 
-A fast and efficient command-line tool written in Rust for recursively searching files in directories. This tool helps you locate files by name across your filesystem with options to customize the search behavior. It is a custom implementation of the `find` command, tailored for speed and efficiency.
+A fast and efficient command-line tool written in Go for recursively searching files in directories. This tool helps you locate files by name across your filesystem with options to customize the search behavior. It is a custom implementation of the `find` command, tailored for speed and efficiency.
 
 ## Installation
 
 ### Prerequisites
 
-- Rust and Cargo (Install from [rustup.rs](https://rustup.rs/))
+- [Go](https://go.dev/doc/install) 1.19 or later.
 
 ### Building from Source
 
 - Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/find.git
+git clone https://github.com/4ster-light/find.git
 cd find
+
+go build -o find
 ```
 
-- Build using Cargo:
+### Using Go Modules
 
 ```bash
-cargo build --release
+go install github.com/4ster-light/find@latest
 ```
 
-The compiled binary will be available at `./target/release/find`
+This will install the `find` command in your `$GOPATH/bin` directory.
 
 ## Usage
 
-You can run the tool either through Cargo or directly using the compiled binary.
-
-In order to install thet binary globally, you can use the following command:
-
 ```bash
-cargo install --path .
+./find [OPTIONS]
 ```
 
-### Using Cargo
-
-```bash
-cargo run -- [[FLAG] [OPTION]]
-```
-
-### Using Binary
-
-```bash
-./target/release/find [[FLAG] [OPTION]]
-```
-
-### Flags and Options
+### Flags
 
 | Flag        | Long Form           | Description                                                 | Required          |
 |-------------|---------------------|-------------------------------------------------------------|-------------------|
@@ -103,7 +89,7 @@ find -d /usr/local -f "config.json" -s -t
 
 ## License
 
-[Add your chosen license here]
+GNU General Public License v3.0
 
 ## Known Issues
 
